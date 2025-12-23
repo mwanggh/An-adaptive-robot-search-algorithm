@@ -1,0 +1,129 @@
+
+<launch>
+<arg name="model" default="burger" doc="model type [burger, waffle, waffle_pi]" />
+
+<arg name="robot_r" default="0.15" />
+<arg name="robot_x_pos" default="-1.6"/>
+<arg name="robot_y_pos" default="-1.03"/>
+<arg name="robot_z_pos" default="0.3"/>
+<arg name="robot_yaw"   default="1.57"/>
+
+<arg name="source_x_pos" default="5.5" />
+<arg name="source_y_pos" default="-6.5" />
+<arg name="source_z_pos" default="0.6" />
+<arg name="source_th" default="0.5" />
+
+<arg name="iter_rate" default="1" />
+<arg name="max_iter" default="360" />
+<arg name="method" default="pear" />
+
+<arg name="visual" default="true" />
+<arg name="data_path" default="/home/wang/results_pear/House09_1_23_08_KI_S2020" />
+
+<!-- ros log -->
+<env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time}] [${node}]: ${message}"/>
+
+<!-- GADEN Player -->
+<include file="/home/wang/disk1/sls1/gaden_tv/House09/House09_1_23_08_KI_S2020/player.launch" />
+
+<!-- Gazebo -->
+<include file="$(find gazebo_ros)/launch/empty_world.launch">
+<arg name="world_name" value="$(find pear)/params/gazebo/world/House09.world"/>
+<arg name="paused" value="false"/>
+<arg name="use_sim_time" value="true"/>
+<arg name="gui" value="$(arg visual)"/>
+<arg name="headless" value="false"/>
+<arg name="debug" value="false"/>
+</include>
+
+<!-- robot state publisher -->
+<node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+<param name="publish_frequency" type="double" value="50.0" />
+</node>
+
+<!-- spawn urdf -->
+<param name="robot_description" command="$(find xacro)/xacro --inorder $(find pear)/params/gazebo/urdf/robot.tb3b.urdf.xacro" />
+<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg model) -x $(arg robot_x_pos) -y $(arg robot_y_pos) -z $(arg robot_z_pos) -Y $(arg robot_yaw) -param robot_description" />
+
+<!-- laser_filters -->
+<node pkg="laser_filters" type="scan_to_scan_filter_chain" output="screen" name="laser_filter">
+<rosparam command="load" file="$(find pear)/params/gazebo/config/laser_filters.yaml" />
+</node>
+
+<!-- Gmapping -->
+<node pkg="gmapping" type="slam_gmapping" name="turtlebot3_slam_gmapping" output="screen">
+<remap from="/scan" to="/scan_filtered"/>
+<param name="base_frame" value="base_footprint"/>
+<param name="odom_frame" value="odom"/>
+<param name="map_frame"  value="map"/>
+<rosparam command="load" file="$(find pear)/params/gazebo/config/gmapping.yaml" />
+</node>
+
+<!-- move_base -->
+<node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+<param name="base_global_planner" value="navfn/NavfnROS"/>
+<param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
+<rosparam file="$(find pear)/params/move_base/costmap_common_params_$(arg model).yaml" command="load" ns="global_costmap" />
+<rosparam file="$(find pear)/params/move_base/costmap_common_params_$(arg model).yaml" command="load" ns="local_costmap" />
+<rosparam file="$(find pear)/params/move_base/local_costmap_params.yaml" command="load" />
+<rosparam file="$(find pear)/params/move_base/global_costmap_params.yaml" command="load" />
+<rosparam file="$(find pear)/params/move_base/move_base_params.yaml" command="load" />
+<rosparam file="$(find pear)/params/move_base/dwa_local_planner_params_$(arg model).yaml" command="load" />
+<remap from="cmd_vel" to="/cmd_vel" />
+<remap from="odom" to="/odom" />
+</node>
+
+<!-- gas_sensor -->
+<node pkg="simulated_gas_sensor" type="simulated_gas_sensor" name="fake_mox" output="screen">
+<param name="/sensor_model" value="0" />
+<param name="odom_topic_name" value="/global_odom" />
+<param name="offset_x" value="0.0" />
+<param name="offset_y" value="0.0" />
+<param name="offset_z" value="0.4" />
+</node>
+
+<!-- anemometer -->
+<node pkg="simulated_anemometer" type="simulated_anemometer" name="fake_anemometer" output="screen">	        
+<param name="odom_topic_name" value="/global_odom" />
+<param name="offset_x" value="0.0" />
+<param name="offset_y" value="0.0" />
+<param name="offset_z" value="0.4" />
+</node>
+
+<!-- pear -->
+<node name="main" pkg="pear" type="pear_node" output="screen" required="true">
+<param name="source_x" value="$(arg source_x_pos)" />
+<param name="source_y" value="$(arg source_y_pos)" />
+<param name="source_th" value="$(arg source_th)" />
+<param name="iter_rate" value="$(arg iter_rate)" />
+<param name="max_iter" value="$(arg max_iter)" />
+<param name="stuck_duration_th" value="60.0" />
+<param name="map_topic" value="/map" />
+<param name="pose_topic" value="/odom" />
+<param name="real_pose_topic" value="/global_odom" />
+<param name="move_base_name" value="/move_base" />
+<param name="gas_sensor_topic" value="/Sensor_reading" />
+<param name="anemometer_topic" value="/WindSensor_reading" />
+<param name="data_path" value="$(arg data_path)" />
+<param name="visual" value="$(arg visual)" />
+
+<param name="rrt_max_iter" value="200" />
+<param name="rrt_max_r" value="3.0" />
+<param name="rrt_min_r" value="0.70" />
+<param name="rrt_step_size" value="0.3" />
+<param name="obs_r" value="0.2" />
+<param name="goal_reach_th" value="$(arg source_th)" />
+<param name="resample_time_th" value="5.5" />
+<param name="frontier_search_th" value="3.0" />
+<param name="random_sample_r" value="3.0" />
+<param name="goal_cluster_num" value="20" />
+<param name="gas_max" value="63000.0" />
+<param name="gas_high_th" value="2000.0" />
+<param name="gas_low_th" value="500.0" />
+<param name="sensor_window_length" value="6.0" />
+<param name="k1" value="0.2" />
+</node>
+
+<!-- rviz -->
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find pear)/params/aaa.rviz"  if="$(arg visual)" />
+</launch>
