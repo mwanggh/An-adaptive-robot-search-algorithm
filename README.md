@@ -20,4 +20,11 @@ Robot simulations were conducted using the [Gazebo](https://gazebosim.org/home) 
 
 ## Cite this paper
 
-**Paper information will be updated after the paper is published.**
+```
+@ARTICLE{11297772,
+  author={Wang, Miao and Xin, Bin and Deng, Fang and Chen, Chen and Qu, Yun},
+  journal={IEEE Transactions on Industrial Electronics}, 
+  title={An Adaptive Robot Search Algorithm for Balancing Exploitation and Exploration in Indoor Intermittent Source Seeking}, 
+  year={2025},
+  doi={10.1109/TIE.2025.3632565}}
+```
