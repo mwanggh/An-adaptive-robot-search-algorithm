@@ -1,4 +1,4 @@
-# An adaptive robot search algorithm for balancing exploitation and exploration in indoor intermittent source seeking
+# An Adaptive Robot Search Algorithm for Balancing Exploitation and Exploration in Indoor Intermittent Source Seeking
 
 ## Source code
 
