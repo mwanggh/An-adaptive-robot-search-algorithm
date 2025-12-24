@@ -1,6 +1,6 @@
-#include "pear.h"
+#include "adsm.h"
 
-Pear::Pear() {
+Adsm::Adsm() {
     ros::NodeHandle nh("~");
     ros::NodeHandle global_nh;
     // ros::Time::waitForValid();
@@ -41,8 +41,8 @@ Pear::Pear() {
     std::string pose_topic, real_pose_topic, map_topic; 
     nh.getParam("pose_topic", pose_topic);
     nh.getParam("real_pose_topic", real_pose_topic);
-    pose_sub_ = nh.subscribe(pose_topic, 5, &Pear::pose_callback, this);
-    real_pose_sub_ = nh.subscribe(real_pose_topic, 5, &Pear::real_pose_callback, this);
+    pose_sub_ = nh.subscribe(pose_topic, 5, &Adsm::pose_callback, this);
+    real_pose_sub_ = nh.subscribe(real_pose_topic, 5, &Adsm::real_pose_callback, this);
     while (std::isnan(x_) || std::isnan(real_x_)) {
         ROS_INFO("Waiting %s and %s.", pose_topic.c_str(), real_pose_topic.c_str());
         ros::spinOnce();
@@ -50,7 +50,7 @@ Pear::Pear() {
     }
 
     nh.getParam("map_topic", map_topic);
-    map_sub_ = nh.subscribe(map_topic, 1, &Pear::map_callback, this);
+    map_sub_ = nh.subscribe(map_topic, 1, &Adsm::map_callback, this);
     while (!map_.is_grid_set()) {
         ROS_INFO("Waiting %s.", map_topic.c_str());
         ros::spinOnce();
@@ -60,8 +60,8 @@ Pear::Pear() {
     std::string gas_sensor_topic, anemometer_topic;
     nh.getParam("gas_sensor_topic", gas_sensor_topic);
     nh.getParam("anemometer_topic", anemometer_topic);
-    gas_sub_ = nh.subscribe(gas_sensor_topic, 1, &Pear::gas_sensor_callback, this);
-    anemometer_sub_ = nh.subscribe(anemometer_topic, 1, &Pear::anemometer_callback, this);
+    gas_sub_ = nh.subscribe(gas_sensor_topic, 1, &Adsm::gas_sensor_callback, this);
+    anemometer_sub_ = nh.subscribe(anemometer_topic, 1, &Adsm::anemometer_callback, this);
     while (std::isnan(gas_) || std::isnan(wind_speed_)) {
         ROS_INFO("Waiting %s and %s.", gas_sensor_topic.c_str(), anemometer_topic.c_str());
         ros::spinOnce();
@@ -94,10 +94,10 @@ Pear::Pear() {
     visual_lines_pub_ = nh.advertise<visualization_msgs::Marker>("visual_lines", 1);
     visual_text_pub_ = nh.advertise<jsk_rviz_plugins::OverlayText>("visual_text", 1);
 
-    ROS_INFO("Pear initialized.");
+    ROS_INFO("Adsm initialized.");
 }
 
-void Pear::loop() {
+void Adsm::loop() {
     std::this_thread::sleep_for(std::chrono::milliseconds(10000));
     ROS_INFO("Start loop. Rate: %.2f", iter_rate_);
     ros::Rate rate(iter_rate_);
@@ -124,7 +124,7 @@ void Pear::loop() {
     }
 }
 
-void Pear::pose_callback(const nav_msgs::Odometry::ConstPtr& msg) {
+void Adsm::pose_callback(const nav_msgs::Odometry::ConstPtr& msg) {
     nav_msgs::Odometry pose_raw = *msg;
     x_ = pose_raw.pose.pose.position.x;
     y_ = pose_raw.pose.pose.position.y;
@@ -140,7 +140,7 @@ void Pear::pose_callback(const nav_msgs::Odometry::ConstPtr& msg) {
     m.getRPY(roll_, pitch_, yaw_);
 }
 
-void Pear::real_pose_callback(const nav_msgs::Odometry::ConstPtr& msg) {
+void Adsm::real_pose_callback(const nav_msgs::Odometry::ConstPtr& msg) {
     nav_msgs::Odometry pose_raw = *msg;
     real_x_ = pose_raw.pose.pose.position.x;
     real_y_ = pose_raw.pose.pose.position.y;
@@ -156,12 +156,12 @@ void Pear::real_pose_callback(const nav_msgs::Odometry::ConstPtr& msg) {
     m.getRPY(real_roll_, real_pitch_, real_yaw_);
 }
 
-void Pear::map_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg) {
+void Adsm::map_callback(const nav_msgs::OccupancyGrid::ConstPtr& msg) {
     map_.update(msg);
     ROS_INFO("Map: width %d, height %d", map_.getSizeInCellsX(), map_.getSizeInCellsX());
 }
 
-void Pear::gas_sensor_callback(const olfaction_msgs::gas_sensor& msg) {
+void Adsm::gas_sensor_callback(const olfaction_msgs::gas_sensor& msg) {
     gas_ = gas_max_ - msg.raw;
 
     double msg_time = msg.header.stamp.toSec();
@@ -190,13 +190,13 @@ void Pear::gas_sensor_callback(const olfaction_msgs::gas_sensor& msg) {
     }
 }
 
-void Pear::anemometer_callback(const olfaction_msgs::anemometer& msg) {
+void Adsm::anemometer_callback(const olfaction_msgs::anemometer& msg) {
     wind_speed_ = msg.wind_speed;
     wind_direction_ = msg.wind_direction;
     ROS_INFO("Wind: speed %.2f, direction %.2f", wind_speed_, wind_direction_);
 }
 
-double Pear::probability(double x, double y) {
+double Adsm::probability(double x, double y) {
     double Q = 4.0;
     double D = 1.0;
     double tau = 250;
@@ -216,7 +216,7 @@ double Pear::probability(double x, double y) {
     return p;
 }
 
-bool Pear::reached_point(double x, double y) {
+bool Adsm::reached_point(double x, double y) {
     for (auto& pose : pose_history_) {
         if (distance(pose.first - x, pose.second - y) < goal_reach_th_) {
             return true;
@@ -225,14 +225,14 @@ bool Pear::reached_point(double x, double y) {
     return false;
 }
 
-void Pear::create_random_gaol(double start_x, double start_y, double r, double& goal_x, double& goal_y) {
+void Adsm::create_random_gaol(double start_x, double start_y, double r, double& goal_x, double& goal_y) {
     double rand_theta = static_cast<double>(rand()) / RAND_MAX * 2 * M_PI;
     double rand_r = static_cast<double>(rand()) / RAND_MAX * r;
     goal_x = start_x + rand_r * cos(rand_theta);
     goal_y = start_y + rand_r * sin(rand_theta);
 }
 
-void Pear::observe() {
+void Adsm::observe() {
     cal_start_time_ = get_current_time();
 
     ROS_INFO("Pose: x %.2f, y %.2f, yaw %.2f", x_, y_, yaw_);
@@ -257,7 +257,7 @@ void Pear::observe() {
         (int)do_sample_, t_duration, resample_time_th_, dis, goal_reach_th_);
 }
 
-void Pear::estimate() {
+void Adsm::estimate() {
     if (do_sample_) {
         // Resampling using the RRT method
         int MAX_SAMPLE_TIME = 10;
@@ -413,7 +413,7 @@ void Pear::estimate() {
     ROS_INFO("size: goals_ %zu, epi_set_ %zu, epr_set_ %zu", goals_.size(), epi_set_.size(), epr_set_.size());
 }
 
-void Pear::evaluate() {
+void Adsm::evaluate() {
     if ((!goals_.empty()) && (!set_random_goal_)) {
         // Normalize j_p, j_i, and j
         ROS_INFO("Calculate j.");
@@ -451,7 +451,7 @@ void Pear::evaluate() {
     ROS_INFO("goal: j %.2f, j_p %.2f, j_i %.2f, type %d", goal_.j ,goal_.j_p, goal_.j_i, goal_.type);
 }
 
-void Pear::navigate() {
+void Adsm::navigate() {
     move_base_msgs::MoveBaseGoal goal;
     goal.target_pose.header.frame_id = map_.getFrameID();
     goal.target_pose.header.stamp = ros::Time::now();
@@ -469,7 +469,7 @@ void Pear::navigate() {
     ROS_INFO("Loop cost time: %.2f ms", cal_duration_ms_);
 }
 
-bool Pear::check_terminal() {
+bool Adsm::check_terminal() {
     // find source check
     dis_to_source_ = distance(real_x_ - source_x_, real_y_ - source_y_);
     if (dis_to_source_ <= source_th_) {
@@ -519,7 +519,7 @@ bool Pear::check_terminal() {
     return false;
 }
 
-void Pear::visualize() {
+void Adsm::visualize() {
     ROS_INFO("Visualize.");
     std::string map_frame = map_.getFrameID();
 
@@ -702,7 +702,7 @@ void Pear::visualize() {
     // visual_points_pub_.publish(marker_f);
 }
 
-void Pear::record_data() {
+void Adsm::record_data() {
     ROS_INFO("Record data.");
     // double r_st = get_current_time();
     // info
@@ -744,7 +744,7 @@ void Pear::record_data() {
     // ROS_INFO("Record data: cost time %.2f ms", (get_current_time()-r_st)*1000.0);
 }
 
-void Pear::save_data() {
+void Adsm::save_data() {
     ROS_INFO("Save data.");
     std::string make_dirs_cmd = "mkdir -p " + data_path_;
     ROS_INFO("%s", make_dirs_cmd.c_str());
@@ -792,7 +792,7 @@ void Pear::save_data() {
     save_gridmap(map_log_, data_path_+"/map.txt"); // map_ (grid data)
 }
 
-void Pear::shutdown_ros() {
+void Adsm::shutdown_ros() {
     std::string param_file = data_path_ + "/params.yaml";
     std::string save_params_cmd = "touch " + param_file + " && rosparam dump " + param_file;
     ROS_INFO("%s", save_params_cmd.c_str());
@@ -813,9 +813,9 @@ void Pear::shutdown_ros() {
 }
 
 int main(int argc, char** argv) {
-    ros::init(argc, argv, "pear_node");
-    Pear pear;
-    pear.loop();
+    ros::init(argc, argv, "adsm_node");
+    Adsm adsm;
+    adsm.loop();
 
     return 0;
 }

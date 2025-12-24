@@ -35,9 +35,9 @@ void save_gridmap(std::vector<std::vector<int8_t>> data, const std::string& file
 
 typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseClient;
 
-class Pear {
+class Adsm {
 public:
-    Pear();
+    Adsm();
     void loop();
 
     inline double distance(double x, double y) {

@@ -15,10 +15,10 @@
 
 <arg name="iter_rate" default="1" />
 <arg name="max_iter" default="360" />
-<arg name="method" default="pear" />
+<arg name="method" default="adsm" />
 
 <arg name="visual" default="true" />
-<arg name="data_path" default="/home/wang/results_pear/House09_1_23_08_KI_S2020" />
+<arg name="data_path" default="/home/wang/results_adsm/House09_1_23_08_KI_S2020" />
 
 <!-- ros log -->
 <env name="ROSCONSOLE_FORMAT" value="[${severity}] [${time}] [${node}]: ${message}"/>
@@ -28,7 +28,7 @@
 
 <!-- Gazebo -->
 <include file="$(find gazebo_ros)/launch/empty_world.launch">
-<arg name="world_name" value="$(find pear)/params/gazebo/world/House09.world"/>
+<arg name="world_name" value="$(find adsm)/params/gazebo/world/House09.world"/>
 <arg name="paused" value="false"/>
 <arg name="use_sim_time" value="true"/>
 <arg name="gui" value="$(arg visual)"/>
@@ -42,12 +42,12 @@
 </node>
 
 <!-- spawn urdf -->
-<param name="robot_description" command="$(find xacro)/xacro --inorder $(find pear)/params/gazebo/urdf/robot.tb3b.urdf.xacro" />
+<param name="robot_description" command="$(find xacro)/xacro --inorder $(find adsm)/params/gazebo/urdf/robot.tb3b.urdf.xacro" />
 <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model $(arg model) -x $(arg robot_x_pos) -y $(arg robot_y_pos) -z $(arg robot_z_pos) -Y $(arg robot_yaw) -param robot_description" />
 
 <!-- laser_filters -->
 <node pkg="laser_filters" type="scan_to_scan_filter_chain" output="screen" name="laser_filter">
-<rosparam command="load" file="$(find pear)/params/gazebo/config/laser_filters.yaml" />
+<rosparam command="load" file="$(find adsm)/params/gazebo/config/laser_filters.yaml" />
 </node>
 
 <!-- Gmapping -->
@@ -56,19 +56,19 @@
 <param name="base_frame" value="base_footprint"/>
 <param name="odom_frame" value="odom"/>
 <param name="map_frame"  value="map"/>
-<rosparam command="load" file="$(find pear)/params/gazebo/config/gmapping.yaml" />
+<rosparam command="load" file="$(find adsm)/params/gazebo/config/gmapping.yaml" />
 </node>
 
 <!-- move_base -->
 <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
 <param name="base_global_planner" value="navfn/NavfnROS"/>
 <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS" />
-<rosparam file="$(find pear)/params/move_base/costmap_common_params_$(arg model).yaml" command="load" ns="global_costmap" />
-<rosparam file="$(find pear)/params/move_base/costmap_common_params_$(arg model).yaml" command="load" ns="local_costmap" />
-<rosparam file="$(find pear)/params/move_base/local_costmap_params.yaml" command="load" />
-<rosparam file="$(find pear)/params/move_base/global_costmap_params.yaml" command="load" />
-<rosparam file="$(find pear)/params/move_base/move_base_params.yaml" command="load" />
-<rosparam file="$(find pear)/params/move_base/dwa_local_planner_params_$(arg model).yaml" command="load" />
+<rosparam file="$(find adsm)/params/move_base/costmap_common_params_$(arg model).yaml" command="load" ns="global_costmap" />
+<rosparam file="$(find adsm)/params/move_base/costmap_common_params_$(arg model).yaml" command="load" ns="local_costmap" />
+<rosparam file="$(find adsm)/params/move_base/local_costmap_params.yaml" command="load" />
+<rosparam file="$(find adsm)/params/move_base/global_costmap_params.yaml" command="load" />
+<rosparam file="$(find adsm)/params/move_base/move_base_params.yaml" command="load" />
+<rosparam file="$(find adsm)/params/move_base/dwa_local_planner_params_$(arg model).yaml" command="load" />
 <remap from="cmd_vel" to="/cmd_vel" />
 <remap from="odom" to="/odom" />
 </node>
@@ -90,8 +90,8 @@
 <param name="offset_z" value="0.4" />
 </node>
 
-<!-- pear -->
-<node name="main" pkg="pear" type="pear_node" output="screen" required="true">
+<!-- adsm -->
+<node name="main" pkg="adsm" type="adsm_node" output="screen" required="true">
 <param name="source_x" value="$(arg source_x_pos)" />
 <param name="source_y" value="$(arg source_y_pos)" />
 <param name="source_th" value="$(arg source_th)" />
@@ -125,5 +125,5 @@
 </node>
 
 <!-- rviz -->
-<node name="rviz" pkg="rviz" type="rviz" args="-d $(find pear)/params/aaa.rviz"  if="$(arg visual)" />
+<node name="rviz" pkg="rviz" type="rviz" args="-d $(find adsm)/params/aaa.rviz"  if="$(arg visual)" />
 </launch>
