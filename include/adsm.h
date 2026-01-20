@@ -38,6 +38,7 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 class Adsm {
 public:
     Adsm();
+    ~Adsm();
     void loop();
 
     inline double distance(double x, double y) {

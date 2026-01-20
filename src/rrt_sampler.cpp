@@ -154,3 +154,7 @@ std::vector<RRTNode*> RRTSampler::sample (Gridmap* gridmap, double start_x_w, do
 
     return nodes_;
 }
+
+RRTSampler::~RRTSampler() {
+    nodes_.clear();  // 清空指针列表
+}

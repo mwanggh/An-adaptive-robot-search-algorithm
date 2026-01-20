@@ -22,6 +22,7 @@ class RRTSampler {
 public:
     RRTSampler();
     RRTSampler(int max_iter, double sample_max_r, double obs_r, double step_size, double near_r=0.5);
+    ~RRTSampler();
     std::vector<RRTNode*> sample (Gridmap* gridmap, double start_x, double start_y);
 
 private:

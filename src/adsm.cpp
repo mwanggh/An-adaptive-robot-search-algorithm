@@ -872,3 +872,16 @@ void save_gridmap(std::vector<std::vector<int8_t>> data, const std::string &file
         ROS_ERROR("Could not write to file.");
     }
 }
+
+Adsm::~Adsm() {
+    if (ac_) {
+        delete ac_;
+        ac_ = nullptr;
+    }
+
+    // 清理 rrt_nodes_ 的内存
+    for (RRTNode* node : rrt_nodes_) {
+        delete node;
+    }
+    rrt_nodes_.clear();
+}
